@@ -1,0 +1,137 @@
+-- =====================================================
+-- Contact Management System - Database Setup
+-- SQL Server Database Script
+-- =====================================================
+
+-- 1. DROP EXISTING DATABASE (Optional - Uncomment if needed)
+-- DROP DATABASE IF EXISTS contact_management_db;
+
+-- 2. CREATE DATABASE
+CREATE DATABASE contact_management_db;
+GO
+
+-- 3. USE THE DATABASE
+USE contact_management_db;
+GO
+
+-- =====================================================
+-- 4. CREATE TABLES
+-- =====================================================
+
+-- Table: app_users
+-- Description: Stores user information for the system
+CREATE TABLE app_users (
+    id BIGINT PRIMARY KEY IDENTITY(1,1),
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(150) NOT NULL UNIQUE,
+    phone NVARCHAR(20) NOT NULL,
+    password NVARCHAR(255) NOT NULL
+);
+
+-- Table: contacts
+-- Description: Stores contact information linked to users
+CREATE TABLE contacts (
+    id BIGINT PRIMARY KEY IDENTITY(1,1),
+    first_name NVARCHAR(100) NOT NULL,
+    last_name NVARCHAR(100) NOT NULL,
+    title NVARCHAR(100),
+    user_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE
+);
+
+-- Table: contact_details
+-- Description: Stores detailed contact information (email, phone)
+CREATE TABLE contact_details (
+    id BIGINT PRIMARY KEY IDENTITY(1,1),
+    contact_id BIGINT NOT NULL,
+    type NVARCHAR(50) NOT NULL,           -- WORK, HOME, PERSONAL
+    value NVARCHAR(150) NOT NULL,         -- Email or Phone Number
+    category NVARCHAR(50) NOT NULL,       -- EMAIL or PHONE
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+);
+
+-- =====================================================
+-- 5. CREATE INDEXES (For Performance)
+-- =====================================================
+
+-- Index on user email (used for login)
+CREATE INDEX idx_users_email ON app_users(email);
+
+-- Index on contact user_id (used for fetching user contacts)
+CREATE INDEX idx_contacts_user_id ON contacts(user_id);
+
+-- Index on contact first/last name (used for search)
+CREATE INDEX idx_contacts_name ON contacts(first_name, last_name);
+
+-- Index on contact_details contact_id (used for fetching details)
+CREATE INDEX idx_contact_details_contact_id ON contact_details(contact_id);
+
+-- =====================================================
+-- 6. SAMPLE DATA (Optional - for testing)
+-- =====================================================
+
+-- Insert Sample Users
+INSERT INTO app_users (name, email, phone, password) VALUES
+('Ahmed Ali', 'ahmed@example.com', '+923001234567', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KFm'),
+('Fatima Khan', 'fatima@example.com', '+923009876543', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KFm'),
+('Hassan Raza', 'hassan@example.com', '+923005555555', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KFm');
+
+-- Insert Sample Contacts for User 1 (Ahmed Ali)
+INSERT INTO contacts (first_name, last_name, title, user_id) VALUES
+('Ali', 'Khan', 'Software Engineer', 1),
+('Sara', 'Ahmed', 'Project Manager', 1),
+('Omar', 'Hassan', 'Business Analyst', 1);
+
+-- Insert Sample Contact Details
+INSERT INTO contact_details (contact_id, type, value, category) VALUES
+-- Ali Khan's details
+(1, 'WORK', 'ali.khan@company.com', 'EMAIL'),
+(1, 'WORK', '+923001111111', 'PHONE'),
+(1, 'PERSONAL', 'ali.personal@gmail.com', 'EMAIL'),
+
+-- Sara Ahmed's details
+(2, 'WORK', 'sara.ahmed@company.com', 'EMAIL'),
+(2, 'WORK', '+923002222222', 'PHONE'),
+(2, 'HOME', '+923332222222', 'PHONE'),
+
+-- Omar Hassan's details
+(3, 'WORK', 'omar.hassan@company.com', 'EMAIL'),
+(3, 'WORK', '+923003333333', 'PHONE');
+
+-- Insert Sample Contacts for User 2 (Fatima Khan)
+INSERT INTO contacts (first_name, last_name, title, user_id) VALUES
+('Ayesha', 'Ali', 'Designer', 2),
+('Zain', 'Malik', 'Developer', 2);
+
+-- Insert Sample Contact Details for Fatima's Contacts
+INSERT INTO contact_details (contact_id, type, value, category) VALUES
+-- Ayesha Ali's details
+(4, 'WORK', 'ayesha.ali@company.com', 'EMAIL'),
+(4, 'WORK', '+923004444444', 'PHONE'),
+
+-- Zain Malik's details
+(5, 'WORK', 'zain.malik@company.com', 'EMAIL'),
+(5, 'HOME', '+923005555555', 'PHONE');
+
+-- =====================================================
+-- 7. VERIFY DATA
+-- =====================================================
+
+-- View all users
+SELECT * FROM app_users;
+
+-- View all contacts with user details
+SELECT c.id, c.first_name, c.last_name, c.title, u.name AS user_name, u.email AS user_email
+FROM contacts c
+INNER JOIN app_users u ON c.user_id = u.id;
+
+-- View all contact details
+SELECT cd.id, cd.contact_id, cd.type, cd.value, cd.category, c.first_name, c.last_name
+FROM contact_details cd
+INNER JOIN contacts c ON cd.contact_id = c.id;
+
+-- =====================================================
+-- DATABASE SETUP COMPLETE
+-- =====================================================
+-- Note: Password hashes shown are for 'password123' (bcrypt encoded)
+-- In production, passwords must be securely generated and stored
