@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import api from '../services/api'
+import Modal from '../components/Modal'
 
 export default function Dashboard(){
   const [contacts,setContacts]=useState([])
@@ -7,43 +8,58 @@ export default function Dashboard(){
   const [editing,setEditing]=useState(null)
   const [showAdd,setShowAdd]=useState(false)
   const [form,setForm]=useState({firstName:'',lastName:'',title:'',userId:1})
+  const [loading,setLoading]=useState(false)
+  const [message,setMessage]=useState('')
 
   useEffect(()=>{ fetchContacts() },[])
 
   const fetchContacts = async ()=>{
+    setLoading(true)
     try{
       const res = await api.get('/contacts')
       setContacts(res.data.content || res.data || [])
-    }catch(err){ console.error(err) }
+    }catch(err){ console.error(err); setMessage('Failed to load contacts') }
+    setLoading(false)
   }
 
   const search = async ()=>{
+    setLoading(true)
     try{
       const res = await api.get('/contacts/search', { params: { q } })
       setContacts(res.data.content || res.data || [])
-    }catch(err){ console.error(err) }
+    }catch(err){ console.error(err); setMessage('Search failed') }
+    setLoading(false)
   }
 
   const save = async ()=>{
+    // basic validation
+    if(!form.firstName || !form.lastName){ setMessage('First and last name required'); return }
+    setLoading(true)
     try{
       if(editing){
         await api.put(`/contacts/${editing}`, form)
+        setMessage('Contact updated')
       }else{
         await api.post('/contacts', form)
+        setMessage('Contact created')
       }
       setShowAdd(false)
       setEditing(null)
       setForm({firstName:'',lastName:'',title:'',userId:1})
       fetchContacts()
-    }catch(err){ console.error(err) }
+    }catch(err){ console.error(err); setMessage('Save failed') }
+    setLoading(false)
   }
 
   const remove = async (id)=>{
     if(!confirm('Delete?')) return
+    setLoading(true)
     try{
       await api.delete(`/contacts/${id}`)
+      setMessage('Contact deleted')
       fetchContacts()
-    }catch(err){ console.error(err) }
+    }catch(err){ console.error(err); setMessage('Delete failed') }
+    setLoading(false)
   }
 
   const startEdit = (c)=>{
@@ -55,14 +71,19 @@ export default function Dashboard(){
   return (
     <div>
       <h2>Dashboard</h2>
-      <div>
-        <input placeholder="Search" value={q} onChange={e=>setQ(e.target.value)} />
-        <button onClick={search}>Search</button>
-        <button onClick={()=>{setShowAdd(true); setEditing(null); setForm({firstName:'',lastName:'',title:'',userId:1})}}>Add</button>
+      {message && <div className="message">{message}</div>}
+      <div className="controls" style={{marginTop:10}}>
+        <input placeholder="Search by name" value={q} onChange={e=>setQ(e.target.value)} />
+        <div className="row">
+          <button onClick={search} disabled={loading}>Search</button>
+          <button onClick={()=>{setShowAdd(true); setEditing(null); setForm({firstName:'',lastName:'',title:'',userId:1})}} disabled={loading}>Add Contact</button>
+        </div>
       </div>
-      <table border="1" cellPadding="6" style={{marginTop:10}}>
+
+      <table className="table" style={{marginTop:12}}>
         <thead><tr><th>ID</th><th>First</th><th>Last</th><th>Title</th><th>Actions</th></tr></thead>
         <tbody>
+          {contacts.length===0 && <tr><td colSpan="5" className="small center">{loading? 'Loading...' : 'No contacts'}</td></tr>}
           {contacts.map(c=> (
             <tr key={c.id}>
               <td>{c.id}</td>
@@ -70,8 +91,8 @@ export default function Dashboard(){
               <td>{c.lastName}</td>
               <td>{c.title}</td>
               <td>
-                <button onClick={()=>startEdit(c)}>Edit</button>
-                <button onClick={()=>remove(c.id)}>Delete</button>
+                <button onClick={()=>startEdit(c)} disabled={loading}>Edit</button>
+                <button onClick={()=>remove(c.id)} disabled={loading}>Delete</button>
               </td>
             </tr>
           ))}
@@ -79,25 +100,27 @@ export default function Dashboard(){
       </table>
 
       {showAdd && (
-        <div style={{border:'1px solid #ccc',padding:10,marginTop:10}}>
+        <Modal onClose={()=>setShowAdd(false)}>
           <h3>{editing? 'Edit' : 'Add'} Contact</h3>
-          <div>
-            <label>First</label>
-            <input value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})} />
+          <div className="form-row">
+            <div>
+              <label>First</label>
+              <input value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})} />
+            </div>
+            <div>
+              <label>Last</label>
+              <input value={form.lastName} onChange={e=>setForm({...form,lastName:e.target.value})} />
+            </div>
           </div>
-          <div>
-            <label>Last</label>
-            <input value={form.lastName} onChange={e=>setForm({...form,lastName:e.target.value})} />
-          </div>
-          <div>
+          <div style={{marginTop:8}}>
             <label>Title</label>
             <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
           </div>
-          <div style={{marginTop:8}}>
-            <button onClick={save}>{editing? 'Save' : 'Create'}</button>
-            <button onClick={()=>setShowAdd(false)}>Cancel</button>
+          <div className="inline-actions">
+            <button onClick={save} disabled={loading}>{editing? 'Save' : 'Create'}</button>
+            <button className="secondary" onClick={()=>setShowAdd(false)} disabled={loading}>Cancel</button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

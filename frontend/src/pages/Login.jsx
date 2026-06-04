@@ -6,6 +6,7 @@ export default function Login(){
   const [email,setEmail]=useState('')
   const [password,setPassword]=useState('')
   const [msg,setMsg]=useState('')
+  const navigate = useNavigate()
 
   const submit = async (e)=>{
     e.preventDefault()
@@ -21,7 +22,6 @@ export default function Login(){
     }
   }
 
-  const navigate = useNavigate()
 
   return (
     <div>

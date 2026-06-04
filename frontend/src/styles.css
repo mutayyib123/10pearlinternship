@@ -23,3 +23,10 @@ button.secondary{background:#e5e7eb;color:#111}
 .controls{display:flex;gap:8px;align-items:center}
 .row{display:flex;gap:12px}
 .center{display:flex;justify-content:center}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:var(--card);padding:18px;border-radius:8px;box-shadow:0 6px 24px rgba(2,6,23,0.2);width:520px;max-width:92%}
+.modal h3{margin-top:0}
+.form-row{display:flex;gap:8px}
+.form-row > div{flex:1}
+.inline-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.small{font-size:12px;color:var(--muted)}
