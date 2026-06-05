@@ -25,7 +25,8 @@ export default function Dashboard(){
   const search = async ()=>{
     setLoading(true)
     try{
-      const res = await api.get('/contacts/search', { params: { q } })
+      // mock backend expects 'query' param; backend may also accept 'q'
+      const res = await api.get('/contacts/search', { params: { query: q } })
       setContacts(res.data.content || res.data || [])
     }catch(err){ console.error(err); setMessage('Search failed') }
     setLoading(false)
